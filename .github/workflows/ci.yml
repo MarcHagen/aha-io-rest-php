@@ -1,0 +1,158 @@
+name: CI
+on:
+  push:
+    branches:
+      - master
+      - release
+  pull_request:
+    # The default types for pull_request are [ opened, synchronize, reopened ].
+    # This is insufficient for our needs, since we're skipping stuff on PRs in
+    # draft mode. By adding the ready_for_review type, when a draft pr is marked
+    # ready, we run everything, including the stuff we'd have skipped up until now.
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+permissions:
+  contents: read  # to fetch code (actions/checkout)
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: ${{ format('ci-{0}', github.head_ref && format('pr-{0}', github.event.pull_request.number) || github.sha) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  unit-tests:
+    name: PHPUnit - Unit Tests
+    runs-on: ubuntu-20.04
+    env:
+      PHP_INI_VALUES: memory_limit=-1, assert.exception=1, zend.assertions=1, error_reporting=-1, log_errors_max_len=0, display_errors=On
+    strategy:
+      matrix:
+        php-version:
+          - "8.3"
+          - "8.4"
+        deps:
+          - normal
+        include:
+          - php-version: 8.3
+            deps: stable
+            composer-options: --prefer-dist --prefer-stable
+
+          - php-version: 8.3
+            deps: lowest
+            composer-options: --prefer-dist
+
+          - php-version: 8.3
+            deps: dev
+            composer-options: --prefer-dist --prefer-stable --prefer-lowest
+
+    steps:
+      -
+        name: 🛎️ Checkout
+        uses: actions/checkout@v4
+      -
+        name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          ini-values: ${{ env.PHP_INI_VALUES }}
+          coverage: none
+          tools: none
+      -
+        name: Install ${{ matrix.deps }} dependencies with composer
+        uses: ramsey/composer-install@v2
+        with:
+          php_version: ${{ matrix.php-version }}
+          composer-options: ${{ matrix.composer-options }}
+      -
+        name: Run PHPUnit
+        run: composer phpunit:unit
+
+  code-coverage:
+    name: PHPUnit - Code Coverage
+    needs:
+      - unit-tests
+    runs-on: ubuntu-20.04
+    steps:
+      -
+        name: 🛎️ Checkout
+        uses: actions/checkout@v4
+      -
+        name: Install PHP with PCOV
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          ini-values: assert.exception=1, zend.assertions=1, error_reporting=-1, log_errors_max_len=0, display_errors=On
+          coverage: pcov
+          tools: none
+      -
+        name: Install ${{ matrix.deps }} dependencies with composer
+        uses: ramsey/composer-install@v2
+        with:
+          php_version: 8.3
+      -
+        name: Run PHPUnit
+        run: composer phpunit:unit -- --coverage-clover=clover.xml
+      -
+        name: Upload coverage file
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: clover.xml
+
+  static-analysis-phpstan:
+    name: PHPStan
+    runs-on: ubuntu-20.04
+
+    strategy:
+      matrix:
+        php-version:
+          - "8.3"
+          - "8.4"
+
+    steps:
+      -
+        name: 🛎️ Checkout
+        uses: actions/checkout@v4
+      -
+        name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          coverage: none
+          tools: none
+      -
+        name: Install dependencies with Composer
+        uses: ramsey/composer-install@v2
+        with:
+          php_version: ${{ matrix.php-version }}
+      -
+        name: Run PHPStan
+        run: composer phpstan -- --error-format=github --memory-limit=2G
+
+  coding-standards:
+    name: Coding Standards
+    runs-on: ubuntu-20.04
+
+    steps:
+      -
+        name: 🛎️ Checkout
+        uses: actions/checkout@v4
+      -
+        name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          coverage: none
+          tools: none
+      -
+        name: Install dependencies with Composer
+        uses: ramsey/composer-install@v2
+        with:
+          php_version: 8.3
+      -
+        name: Run ECS
+        run: composer style-check

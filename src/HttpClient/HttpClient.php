@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MarcHagen\AhaIo\Rest\HttpClient;
 
 use MarcHagen\AhaIo\Rest\AhaConfig;
-use MarcHagen\AhaIo\Rest\Exception\AhaIoApiException;
 use MarcHagen\AhaIo\Rest\Exception\InvalidArgumentException;
 use MarcHagen\AhaIo\Rest\Token\Api\ApiToken;
 use Psr\Http\Client\ClientExceptionInterface;
@@ -16,7 +15,6 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\UriFactoryInterface;
-use Throwable;
 
 final class HttpClient
 {
@@ -33,8 +31,7 @@ final class HttpClient
         private readonly ResponseFactoryInterface $responseFactory,
         private readonly StreamFactoryInterface $streamFactory,
         private readonly UriFactoryInterface $uriFactory,
-    ) {
-    }
+    ) {}
 
     /**
      * @param string[]              $parameters
@@ -56,6 +53,41 @@ final class HttpClient
         $this->lastResponse = $this->client->sendRequest($request);
 
         return $this->lastResponse;
+    }
+
+    public function getPsr17RequestFactory(): RequestFactoryInterface
+    {
+        return $this->requestFactory;
+    }
+
+    public function getPsr17UriFactory(): UriFactoryInterface
+    {
+        return $this->uriFactory;
+    }
+
+    public function getPsr17StreamFactory(): StreamFactoryInterface
+    {
+        return $this->streamFactory;
+    }
+
+    public function getPsr18Client(): ClientInterface
+    {
+        return $this->client;
+    }
+
+    public function getPsr17ResponseFactory(): ResponseFactoryInterface
+    {
+        return $this->responseFactory;
+    }
+
+    public function getLastResponse(): ?ResponseInterface
+    {
+        return $this->lastResponse;
+    }
+
+    public function getLastRequest(): ?RequestInterface
+    {
+        return $this->lastRequest;
     }
 
     /**
@@ -108,16 +140,6 @@ final class HttpClient
         return $this->lastRequest = $request;
     }
 
-    public function getPsr17RequestFactory(): RequestFactoryInterface
-    {
-        return $this->requestFactory;
-    }
-
-    public function getPsr17UriFactory(): UriFactoryInterface
-    {
-        return $this->uriFactory;
-    }
-
     /**
      * @return string[]
      */
@@ -130,30 +152,5 @@ final class HttpClient
             'OPTIONS',
             'HEAD',
         ];
-    }
-
-    public function getPsr17StreamFactory(): StreamFactoryInterface
-    {
-        return $this->streamFactory;
-    }
-
-    public function getPsr18Client(): ClientInterface
-    {
-        return $this->client;
-    }
-
-    public function getPsr17ResponseFactory(): ResponseFactoryInterface
-    {
-        return $this->responseFactory;
-    }
-
-    public function getLastResponse(): ?ResponseInterface
-    {
-        return $this->lastResponse;
-    }
-
-    public function getLastRequest(): ?RequestInterface
-    {
-        return $this->lastRequest;
     }
 }

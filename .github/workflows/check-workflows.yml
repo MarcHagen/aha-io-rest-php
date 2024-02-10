@@ -1,0 +1,64 @@
+---
+name: Lint GitHub Actions Workflows
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths:
+      - .github/workflows/**
+  push:
+    branches:
+      - main
+      - release
+    paths:
+      - .github/workflows/**
+
+permissions:
+  contents: read  # to fetch code (actions/checkout)
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: ${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actionlint:
+    name: Lint GitHub Action files
+    runs-on: ubuntu-20.04
+    steps:
+      -
+        name: 🛎️ Checkout
+        uses: actions/checkout@v4
+      -
+        if: hashFiles( '.github/actionlint-matcher.json' ) == ''
+        name: Fetch default actionlint-matcher
+        shell: bash
+        run: |
+          cat << EOF > .github/actionlint-matcher.json
+          {
+            "problemMatcher": [
+              {
+                "owner": "actionlint",
+                "pattern": [
+                  {
+                    "regexp": "^(?:\\\x1b\\\[\\\d+m)?(.+?)(?:\\\x1b\\\[\\\d+m)*:(?:\\\x1b\\\[\\\d+m)*(\\\d+)(?:\\\x1b\\\[\\\d+m)*:(?:\\\x1b\\\[\\\d+m)*(\\\d+)(?:\\\x1b\\\[\\\d+m)*: (?:\\\x1b\\\[\\\d+m)*(.+?)(?:\\\x1b\\\[\\\d+m)* \\\[(.+?)\\\]$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "message": 4,
+                    "code": 5
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+      -
+        run: echo "::add-matcher::.github/actionlint-matcher.json"
+      -
+        name: Check workflow files
+        uses: docker://rhysd/actionlint:1.6.24@sha256:6a0fd0932caf9236d921d9a158a5c119d181cb8c2294cab7b3a394300570f003 # 1.6.24
+        with:
+          args: -color

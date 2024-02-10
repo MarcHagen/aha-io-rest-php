@@ -57,7 +57,7 @@ jobs:
         name: Install PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-versions }}
+          php-version: ${{ matrix.php-version }}
           ini-values: ${{ env.PHP_INI_VALUES }}
           coverage: none
           tools: none
@@ -89,7 +89,7 @@ jobs:
           coverage: pcov
           tools: none
       -
-        name: Install ${{ matrix.deps }} dependencies with composer
+        name: Install dependencies with composer
         uses: ramsey/composer-install@v2
         with:
           php_version: 8.3

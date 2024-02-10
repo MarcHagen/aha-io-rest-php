@@ -9,7 +9,6 @@ use MarcHagen\AhaIo\Rest\Client\Client;
 use MarcHagen\AhaIo\Rest\Exception\UnexpectedResponseException;
 use MarcHagen\AhaIo\Rest\HttpClient\HttpClient;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
 
 abstract class AbstractApi implements ApiInterface
 {
@@ -34,6 +33,7 @@ abstract class AbstractApi implements ApiInterface
     }
 
     /**
+     * @param ?string $postBody
      * @param string[] $parameters
      * @param array<string, string> $headers
      */

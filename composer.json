@@ -1,5 +1,5 @@
 {
-    "name": "marchagen/aha-io-rest-php",
+    "name": "marchagen/aha-io-rest",
     "description": "Aha.io REST API via PSR-18 HTTP Client",
     "license": "MIT",
     "type": "library",

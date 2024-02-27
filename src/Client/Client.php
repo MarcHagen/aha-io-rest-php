@@ -105,7 +105,7 @@ final class Client
         $resolver->setAllowedTypes('company_name', ['string']);
         $resolver->setAllowedTypes('api_token', [ApiToken::class, BearerToken::class]);
 
-        if (is_string($options['api_token'])) {
+        if (array_key_exists('api_token', $options) && is_string($options['api_token'])) {
             $options['api_token'] = new ApiToken($options['api_token']);
         }
 

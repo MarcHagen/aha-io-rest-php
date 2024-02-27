@@ -3,7 +3,7 @@
 ## Introduction
 
 Aha.io REST API PHP Client uses [PSR-7 (HTTP Message Interface)](http://www.php-fig.org/psr/psr-7/) to connect
-with [JetBrains YouTrack REST API](https://www.jetbrains.com/help/youtrack/standalone/2017.2/Resources-for-Developers.html).
+with [Aha.io REST API](https://www.aha.io/api).
 
 ## Contents
 
